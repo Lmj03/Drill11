@@ -1,5 +1,7 @@
 """Boy sprite rendering and state-driven behavior."""
 
+from datetime import datetime
+
 import pico2d
 
 from config import (
@@ -21,8 +23,32 @@ SPRITE_BOUNDS = (
 )
 
 
+class State:
+    name = "STATE"
+
+    def enter(self, boy, now):
+        pass
+
+    def exit(self, boy):
+        pass
+
+    def handle_key(self, boy, key, pressed, now):
+        pass
+
+    def update(self, boy, dt, now):
+        pass
+
+
+class Idle(State):
+    name = "IDLE"
+
+    def enter(self, boy, now):
+        boy.is_running = False
+
+
 class Boy:
-    def __init__(self, *, load_graphics=True):
+    def __init__(self, *, load_graphics=True, clock=None):
+        self.clock = clock or datetime.now
         self.image = (pico2d.load_image(str(ASSET_DIR / "animation_sheet.png"))
                       if load_graphics else None)
         self.x = CANVAS_WIDTH / 2
@@ -32,6 +58,24 @@ class Boy:
         self.scale = BASE_SCALE
         self.animation_time = 0.0
         self.is_running = False
+        self.state = Idle()
+        self.state.enter(self, self.clock())
+
+    def change_state(self, state, now):
+        self.state.exit(self)
+        self.state = state
+        self.animation_time = 0.0
+        self.state.enter(self, now)
+
+    def handle_key(self, key, pressed, now=None):
+        self.state.handle_key(self, key, pressed,
+                              now if now is not None else self.clock())
+
+    def update(self, dt, now=None):
+        now = now if now is not None else self.clock()
+        dt = max(0.0, dt)
+        self.animate(dt)
+        self.state.update(self, dt, now)
 
     @property
     def frame(self):
