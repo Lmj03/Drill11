@@ -6,7 +6,7 @@ import random
 import pico2d
 
 from config import (
-    ANIMATION_FPS, ASSET_DIR, BASE_SCALE, BASE_SPEED, CANVAS_WIDTH,
+    ANIMATION_FPS, ASSET_DIR, AUTO_RUN_DURATION, BASE_SCALE, BASE_SPEED, CANVAS_WIDTH,
     FRAME_COUNT, FRAME_HEIGHT, FRAME_WIDTH, GROUND_Y,
 )
 
@@ -79,8 +79,15 @@ class AutoRun(State):
     def enter(self, boy, now):
         boy.is_running = True
         boy.facing = boy.choose_direction((-1, 1))
+        boy.auto_started_at = now
+        boy.auto_elapsed = 0.0
 
     def update(self, boy, dt, now):
+        boy.auto_elapsed = max(boy.auto_elapsed,
+                               (now - boy.auto_started_at).total_seconds())
+        if boy.auto_elapsed >= AUTO_RUN_DURATION:
+            boy.change_state(Idle(), now)
+            return
         boy.x += boy.facing * boy.speed * dt
 
 
@@ -98,6 +105,8 @@ class Boy:
         self.animation_time = 0.0
         self.is_running = False
         self.pressed_keys = set()
+        self.auto_started_at = None
+        self.auto_elapsed = 0.0
         self.state = Idle()
         self.state.enter(self, self.clock())
 
