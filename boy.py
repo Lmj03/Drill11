@@ -1,6 +1,7 @@
 """Boy sprite rendering and state-driven behavior."""
 
 from datetime import datetime
+import random
 
 import pico2d
 
@@ -48,6 +49,8 @@ class Idle(State):
     def handle_key(self, boy, key, pressed, now):
         if pressed and key in ("left", "right"):
             boy.change_state(Run(), now)
+        elif pressed and key == "a":
+            boy.change_state(AutoRun(), now)
 
 
 class Run(State):
@@ -57,7 +60,9 @@ class Run(State):
         boy.is_running = True
 
     def handle_key(self, boy, key, pressed, now):
-        if key in ("left", "right") and not boy.pressed_keys:
+        if pressed and key == "a":
+            boy.change_state(AutoRun(), now)
+        elif key in ("left", "right") and not boy.pressed_keys:
             boy.change_state(Idle(), now)
 
     def update(self, boy, dt, now):
@@ -68,9 +73,21 @@ class Run(State):
         boy.x = max(half_width, min(CANVAS_WIDTH - half_width, boy.x))
 
 
+class AutoRun(State):
+    name = "AUTO_RUN"
+
+    def enter(self, boy, now):
+        boy.is_running = True
+        boy.facing = boy.choose_direction((-1, 1))
+
+    def update(self, boy, dt, now):
+        boy.x += boy.facing * boy.speed * dt
+
+
 class Boy:
-    def __init__(self, *, load_graphics=True, clock=None):
+    def __init__(self, *, load_graphics=True, clock=None, choose_direction=None):
         self.clock = clock or datetime.now
+        self.choose_direction = choose_direction or random.choice
         self.image = (pico2d.load_image(str(ASSET_DIR / "animation_sheet.png"))
                       if load_graphics else None)
         self.x = CANVAS_WIDTH / 2
