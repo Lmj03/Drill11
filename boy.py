@@ -59,9 +59,10 @@ class Run(State):
     name = "RUN"
 
     def enter(self, boy, now):
-        boy.is_running = True
+        boy.is_running = len(boy.pressed_keys) == 1
 
     def handle_key(self, boy, key, pressed, now):
+        boy.is_running = len(boy.pressed_keys) == 1
         if pressed and key == "a":
             boy.change_state(AutoRun(), now)
         elif key in ("left", "right") and not boy.pressed_keys:
@@ -69,8 +70,9 @@ class Run(State):
 
     def update(self, boy, dt, now):
         # Opposing keys cancel movement, while facing keeps the last keydown.
-        if len(boy.pressed_keys) == 1:
-            boy.x += boy.facing * boy.speed * dt
+        if len(boy.pressed_keys) != 1:
+            return
+        boy.x += boy.facing * boy.speed * dt
         half_width = boy.visible_width / 2
         boy.x = max(half_width, min(CANVAS_WIDTH - half_width, boy.x))
 
