@@ -96,6 +96,20 @@ class AutoRun(State):
         boy.scale = BASE_SCALE * (1 + (AUTO_SCALE_MULTIPLIER - 1) * progress)
         # Trapezoid integration is exact for linear acceleration.
         boy.x += boy.facing * (previous_speed + boy.speed) / 2 * dt
+        half_width = boy.visible_width / 2
+        low, high = half_width, CANVAS_WIDTH - half_width
+        # Reflect overshoot too, so a slow frame cannot leave the canvas.
+        while boy.x < low or boy.x > high:
+            if boy.x < low:
+                boy.x = 2 * low - boy.x
+                boy.facing = 1
+            elif boy.x > high:
+                boy.x = 2 * high - boy.x
+                boy.facing = -1
+        if boy.x <= low:
+            boy.facing = 1
+        elif boy.x >= high:
+            boy.facing = -1
 
 
 class Boy:
