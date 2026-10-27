@@ -61,7 +61,9 @@ class Run(State):
             boy.change_state(Idle(), now)
 
     def update(self, boy, dt, now):
-        boy.x += boy.facing * boy.speed * dt
+        # Opposing keys cancel movement, while facing keeps the last keydown.
+        if len(boy.pressed_keys) == 1:
+            boy.x += boy.facing * boy.speed * dt
         half_width = boy.visible_width / 2
         boy.x = max(half_width, min(CANVAS_WIDTH - half_width, boy.x))
 
@@ -91,6 +93,8 @@ class Boy:
     def handle_key(self, key, pressed, now=None):
         if key in ("left", "right"):
             if pressed:
+                if key in self.pressed_keys:
+                    return  # OS key repeat must not change the last real input.
                 self.pressed_keys.add(key)
                 self.facing = -1 if key == "left" else 1
             else:
