@@ -79,10 +79,22 @@ class AutoRun(State):
     name = "AUTO_RUN"
 
     def enter(self, boy, now):
+        boy.speed = BASE_SPEED
+        boy.scale = BASE_SCALE
         boy.is_running = True
         boy.facing = boy.choose_direction((-1, 1))
         boy.auto_started_at = now
         boy.auto_elapsed = 0.0
+
+    def exit(self, boy):
+        boy.speed = BASE_SPEED
+        boy.scale = BASE_SCALE
+        boy.auto_started_at = None
+        boy.auto_elapsed = 0.0
+
+    def handle_key(self, boy, key, pressed, now):
+        if pressed and key in ("left", "right"):
+            boy.change_state(Run(), now)
 
     def update(self, boy, dt, now):
         previous_speed = boy.speed
@@ -146,7 +158,7 @@ class Boy:
                 self.facing = -1 if key == "left" else 1
             else:
                 self.pressed_keys.discard(key)
-                if len(self.pressed_keys) == 1:
+                if len(self.pressed_keys) == 1 and not isinstance(self.state, AutoRun):
                     self.facing = -1 if "left" in self.pressed_keys else 1
         self.state.handle_key(self, key, pressed,
                               now if now is not None else self.clock())
