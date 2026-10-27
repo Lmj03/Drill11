@@ -72,6 +72,9 @@ def main(*, max_frames=None):
             previous = now
             if not process_events(boy, pico2d.get_events(), now):
                 break
+            if not (pico2d.SDL_GetWindowFlags(pico2d.window)
+                    & pico2d.SDL_WINDOW_INPUT_FOCUS):
+                boy.release_keys(now)
             boy.update(dt, now)
             draw_scene(grass, boy, font)
             pico2d.update_canvas()

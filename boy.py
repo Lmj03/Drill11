@@ -169,6 +169,12 @@ class Boy:
         self.animate(dt)
         self.state.update(self, dt, now)
 
+    def release_keys(self, now=None):
+        """Losing window focus must not leave a movement key stuck down."""
+        self.pressed_keys.clear()
+        if isinstance(self.state, Run):
+            self.change_state(Idle(), now if now is not None else self.clock())
+
     @property
     def frame(self):
         return int(self.animation_time * ANIMATION_FPS) % FRAME_COUNT
