@@ -45,6 +45,26 @@ class Idle(State):
     def enter(self, boy, now):
         boy.is_running = False
 
+    def handle_key(self, boy, key, pressed, now):
+        if pressed and key in ("left", "right"):
+            boy.change_state(Run(), now)
+
+
+class Run(State):
+    name = "RUN"
+
+    def enter(self, boy, now):
+        boy.is_running = True
+
+    def handle_key(self, boy, key, pressed, now):
+        if key in ("left", "right") and not boy.pressed_keys:
+            boy.change_state(Idle(), now)
+
+    def update(self, boy, dt, now):
+        boy.x += boy.facing * boy.speed * dt
+        half_width = boy.visible_width / 2
+        boy.x = max(half_width, min(CANVAS_WIDTH - half_width, boy.x))
+
 
 class Boy:
     def __init__(self, *, load_graphics=True, clock=None):
@@ -58,6 +78,7 @@ class Boy:
         self.scale = BASE_SCALE
         self.animation_time = 0.0
         self.is_running = False
+        self.pressed_keys = set()
         self.state = Idle()
         self.state.enter(self, self.clock())
 
@@ -68,6 +89,14 @@ class Boy:
         self.state.enter(self, now)
 
     def handle_key(self, key, pressed, now=None):
+        if key in ("left", "right"):
+            if pressed:
+                self.pressed_keys.add(key)
+                self.facing = -1 if key == "left" else 1
+            else:
+                self.pressed_keys.discard(key)
+                if len(self.pressed_keys) == 1:
+                    self.facing = -1 if "left" in self.pressed_keys else 1
         self.state.handle_key(self, key, pressed,
                               now if now is not None else self.clock())
 
