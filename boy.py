@@ -6,7 +6,8 @@ import random
 import pico2d
 
 from config import (
-    ANIMATION_FPS, ASSET_DIR, AUTO_RUN_DURATION, AUTO_SPEED_MULTIPLIER,
+    ANIMATION_FPS, ASSET_DIR, AUTO_RUN_DURATION, AUTO_SCALE_MULTIPLIER,
+    AUTO_SPEED_MULTIPLIER,
     BASE_SCALE, BASE_SPEED, CANVAS_WIDTH,
     FRAME_COUNT, FRAME_HEIGHT, FRAME_WIDTH, GROUND_Y,
 )
@@ -92,6 +93,7 @@ class AutoRun(State):
             return
         progress = boy.auto_elapsed / AUTO_RUN_DURATION
         boy.speed = BASE_SPEED * (1 + (AUTO_SPEED_MULTIPLIER - 1) * progress)
+        boy.scale = BASE_SCALE * (1 + (AUTO_SCALE_MULTIPLIER - 1) * progress)
         # Trapezoid integration is exact for linear acceleration.
         boy.x += boy.facing * (previous_speed + boy.speed) / 2 * dt
 
