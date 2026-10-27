@@ -6,7 +6,8 @@ import random
 import pico2d
 
 from config import (
-    ANIMATION_FPS, ASSET_DIR, AUTO_RUN_DURATION, BASE_SCALE, BASE_SPEED, CANVAS_WIDTH,
+    ANIMATION_FPS, ASSET_DIR, AUTO_RUN_DURATION, AUTO_SPEED_MULTIPLIER,
+    BASE_SCALE, BASE_SPEED, CANVAS_WIDTH,
     FRAME_COUNT, FRAME_HEIGHT, FRAME_WIDTH, GROUND_Y,
 )
 
@@ -83,12 +84,16 @@ class AutoRun(State):
         boy.auto_elapsed = 0.0
 
     def update(self, boy, dt, now):
+        previous_speed = boy.speed
         boy.auto_elapsed = max(boy.auto_elapsed,
                                (now - boy.auto_started_at).total_seconds())
         if boy.auto_elapsed >= AUTO_RUN_DURATION:
             boy.change_state(Idle(), now)
             return
-        boy.x += boy.facing * boy.speed * dt
+        progress = boy.auto_elapsed / AUTO_RUN_DURATION
+        boy.speed = BASE_SPEED * (1 + (AUTO_SPEED_MULTIPLIER - 1) * progress)
+        # Trapezoid integration is exact for linear acceleration.
+        boy.x += boy.facing * (previous_speed + boy.speed) / 2 * dt
 
 
 class Boy:
