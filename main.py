@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 import pico2d
+from pico2d import pico2d as canvas
 
 from boy import Boy
 from config import AUTO_RUN_DURATION, CANVAS_HEIGHT, CANVAS_WIDTH, TARGET_FPS
@@ -53,14 +54,26 @@ def draw_scene(grass, boy, font=None):
         font.draw(24, CANVAS_HEIGHT - 32, "AUTO RUN / pico2d", (35, 45, 65))
         font.draw(24, CANVAS_HEIGHT - 62, "A: auto run   Left/Right: move", (50, 60, 75))
         font.draw(24, CANVAS_HEIGHT - 92, status, (40, 55, 85))
-    pico2d.SDL_SetWindowTitle(pico2d.window, ("AutoRun | " + status).encode())
+    pico2d.SDL_SetWindowTitle(canvas.window, ("AutoRun | " + status).encode())
+
+
+def open_game_canvas():
+    pico2d.open_canvas(CANVAS_WIDTH, CANVAS_HEIGHT)
+    # pico2d 1.5.1 checks `is None`, but SDL can return a null pointer object.
+    # Ensure software rendering is available when accelerated SDL is absent.
+    if not canvas.renderer and canvas.window:
+        canvas.renderer = pico2d.SDL_CreateRenderer(
+            canvas.window, -1, pico2d.SDL_RENDERER_SOFTWARE)
+    if not canvas.window or not canvas.renderer:
+        error = pico2d.SDL_GetError().decode("utf-8", errors="replace")
+        pico2d.close_canvas()
+        raise RuntimeError(f"pico2d could not create an SDL canvas: {error}")
+    pico2d.hide_lattice()
 
 
 def main(*, max_frames=None):
-    pico2d.open_canvas(CANVAS_WIDTH, CANVAS_HEIGHT)
+    open_game_canvas()
     try:
-        if not pico2d.renderer:
-            raise RuntimeError("pico2d could not create an SDL renderer")
         grass = Grass()
         boy = Boy()
         font = load_hud_font()
@@ -72,7 +85,7 @@ def main(*, max_frames=None):
             previous = now
             if not process_events(boy, pico2d.get_events(), now):
                 break
-            if not (pico2d.SDL_GetWindowFlags(pico2d.window)
+            if not (pico2d.SDL_GetWindowFlags(canvas.window)
                     & pico2d.SDL_WINDOW_INPUT_FOCUS):
                 boy.release_keys(now)
             boy.update(dt, now)
